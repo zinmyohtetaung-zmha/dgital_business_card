@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Business Card & QR Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar and ambient glow dynamics */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-card {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-effect {
+            box-shadow: 0 0 35px -5px rgba(99, 102, 241, 0.35);
+        }
+        /* Custom notification message toast */
+        #toast {
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-screen antialiased transition-colors duration-300">
+
+    <!-- Background Ambient Glow -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 max-w-md mx-auto min-h-screen px-4 py-6 flex flex-col justify-between">
+        
+        <!-- Header & Settings Bar -->
+        <header class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Digital Card</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="w-10 h-10 rounded-full glass-card flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-105 transition-all shadow-sm" aria-label="Toggle Theme">
+                    <i id="themeIcon" class="fas font-solid fa-moon text-lg"></i>
+                </button>
+                <!-- Quick Share Button -->
+                <button onclick="sharePage()" class="w-10 h-10 rounded-full glass-card flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-105 transition-all shadow-sm" aria-label="Share">
+                    <i class="fas fa-share-nodes text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Business Card Body -->
+        <main class="space-y-6">
+            
+            <!-- Profile Hero Card -->
+            <div class="glass-card rounded-3xl p-6 text-center shadow-xl glow-effect relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-80"></div>
+                
+                <!-- Avatar -->
+                <div class="relative z-10 mt-6 inline-block">
+                    <div class="w-28 h-28 rounded-full p-1 bg-white dark:bg-slate-900 shadow-xl mx-auto">
+                        <img id="profileAvatar" src="image/profile.jpg" alt="Profile Picture" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" title="Available for work"></span>
+                </div>
+
+                <!-- User Info -->
+                <div class="mt-4">
+                    <h1 id="userName" class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Zin Myo Htet Aung</h1>
+                    <p id="userTitle" class="text-sm font-semibold text-brand-600 dark:text-brand-500 mt-0.5">Programmer</p>
+                    <p id="userCompany" class="text-xs text-slate-500 dark:text-slate-400 mt-1"><i class="fas fa-building mr-1"></i> Galaxy Software Co., Ltd.</p>
+                </div>
+
+                <!-- Bio -->
+                <p id="userBio" class="mt-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                    I build reliable desktop applications, business management systems and web solutions using C#, .NET, SQL Server and modern web technologies.
+                </p>
+
+                <!-- Action CTA Buttons -->
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <!-- Save Contact (VCF Download) -->
+                    <button onclick="downloadVCard()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-3.5 px-4 rounded-2xl font-semibold text-sm shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 transition-all active:scale-95">
+                        <i class="fas fa-user-plus text-base"></i>
+                        <span>Save Contact</span>
+                    </button>
+                    <!-- Quick Call -->
+                    <a id="callBtn" href="tel:+959451990362" class="w-full sm:w-auto px-4 py-3.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95">
+                        <i class="fas fa-phone text-emerald-500"></i>
+                        <span class="sm:hidden">Call Now</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Communication Links Grid -->
+            <div class="grid grid-cols-3 gap-3">
+                <a id="emailBtn" href="mailto:zinmyohtetaung.zingyi@gmail.com" class="glass-card p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-500 transition-all text-center group shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <span class="text-xs font-medium text-slate-600 dark:text-slate-300">Email</span>
+                </a>
+                
+                <a id="locationBtn" href="https://maps.google.com/?q=Yangon,Myanmar" target="_blank" class="glass-card p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-500 transition-all text-center group shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                        <i class="fas fa-location-dot"></i>
+                    </div>
+                    <span class="text-xs font-medium text-slate-600 dark:text-slate-300">Location</span>
+                </a>
+
+                <a id="websiteBtn" href="https://pjzinmyo.vercel.app" target="_blank" class="glass-card p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-500 transition-all text-center group shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <span class="text-xs font-medium text-slate-600 dark:text-slate-300">Website</span>
+                </a>
+            </div>
+
+            <!-- Social Media Handles -->
+            <div class="glass-card rounded-3xl p-5 shadow-lg space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">Connect with me</h3>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <a id="linkedinBtn" href="https://linkedin.com" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200/50 dark:border-slate-700/50">
+                        <i class="fab fa-linkedin text-blue-600 text-xl"></i>
+                        <div class="text-left overflow-hidden">
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">LinkedIn</p>
+                            <p class="text-[10px] text-slate-400 truncate">@alexmorgan</p>
+                        </div>
+                    </a>
+
+                    <a id="githubBtn" href="https://github.com/zinmyohtetaung-zmha" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200/50 dark:border-slate-700/50">
+                        <i class="fab fa-github text-slate-800 dark:text-white text-xl"></i>
+                        <div class="text-left overflow-hidden">
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">GitHub</p>
+                            <p class="text-[10px] text-slate-400 truncate">@alexmorgan-dev</p>
+                        </div>
+                    </a>
+
+                    <a id="telegramBtn" href="https://t.me" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200/50 dark:border-slate-700/50">
+                        <i class="fab fa-telegram text-sky-500 text-xl"></i>
+                        <div class="text-left overflow-hidden">
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Telegram</p>
+                            <p class="text-[10px] text-slate-400 truncate">@alex_morgan</p>
+                        </div>
+                    </a>
+
+                    <a id="facebookBtn" href="https://facebook.com" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200/50 dark:border-slate-700/50">
+                        <i class="fab fa-facebook text-blue-500 text-xl"></i>
+                        <div class="text-left overflow-hidden">
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Facebook</p>
+                            <p class="text-[10px] text-slate-400 truncate">alex.morgan.profile</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Print Ready QR Code Generator Section -->
+            <div class="glass-card rounded-3xl p-5 shadow-lg space-y-4 border-2 border-brand-500/20">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Business Card QR Code</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Scan or download code for physical printing</p>
+                    </div>
+                    <button onclick="toggleQRConfig()" class="text-xs font-semibold text-brand-600 dark:text-brand-500 hover:underline">
+                        Customize
+                    </button>
+                </div>
+
+                <!-- QR Display Container -->
+                <div class="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-inner border border-slate-200 dark:border-slate-800">
+                    <div id="qrcode" class="p-2 bg-white rounded-xl shadow-sm"></div>
+                    <p id="qrUrlDisplay" class="text-[11px] text-slate-400 mt-3 truncate max-w-[240px]"></p>
+                </div>
+
+                <!-- QR Controls Accordion (Hidden by default) -->
+                <div id="qrConfigBox" class="hidden space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Target URL for QR</label>
+                        <input type="url" id="qrTargetInput" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="https://yourwebsite.com">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateQRCode()" class="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold transition-all">Update QR</button>
+                        <button onclick="resetQRUrl()" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-300 transition-all">Use Current Page</button>
+                    </div>
+                </div>
+
+                <!-- Download QR Button -->
+                <button onclick="downloadQRCode()" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95">
+                    <i class="fas fa-download"></i>
+                    <span>Download QR Code Image (PNG)</span>
+                </button>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-xs text-slate-400 dark:text-slate-600 space-y-1">
+            <p>© <span id="year"></span> Digital Business Card. Powered by Modern Web.</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-2.5 px-5 rounded-full shadow-2xl opacity-0 pointer-events-none z-50 flex items-center gap-2">
+        <i id="toastIcon" class="fas fa-check-circle text-emerald-400"></i>
+        <span id="toastMsg">Action completed successfully!</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Profile Data Object
+        const profileData = {
+            firstName: "Alex",
+            lastName: "Morgan",
+            title: "Senior Product Designer",
+            company: "TechVision Solutions Co., Ltd.",
+            phone: "+959123456789",
+            email: "alex.morgan@example.com",
+            website: "https://example.com",
+            location: "Yangon, Myanmar",
+            bio: "Crafting intuitive digital experiences & scalable design systems. Passionate about innovation, UI UX design, and technology.",
+            linkedin: "https://linkedin.com",
+            github: "https://github.com",
+            telegram: "https://t.me",
+            facebook: "https://facebook.com"
+        };
+
+        let qrCodeObj = null;
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set current year
+            document.getElementById('year').textContent = new Date().getFullYear();
+
+            // Setup Target URL input to current page URL
+            const currentUrl = window.location.href;
+            document.getElementById('qrTargetInput').value = currentUrl;
+            document.getElementById('qrUrlDisplay').textContent = currentUrl;
+
+            // Generate initial QR Code
+            generateQR(currentUrl);
+
+            // Detect and set System Theme
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+                updateThemeIcon(true);
+            }
+        });
+
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            updateThemeIcon(isDark);
+            showToast(isDark ? "Switched to Dark Mode" : "Switched to Light Mode", "fa-moon");
+        }
+
+        function updateThemeIcon(isDark) {
+            const icon = document.getElementById('themeIcon');
+            if (isDark) {
+                icon.className = 'fas fa-sun text-yellow-400 text-lg';
+            } else {
+                icon.className = 'fas fa-moon text-slate-600 text-lg';
+            }
+        }
+
+        // Generate vCard (.vcf) & Download Function
+        function downloadVCard() {
+            try {
+                // vCard 3.0 Format
+                const vCardData = [
+                    'BEGIN:VCARD',
+                    'VERSION:3.0',
+                    `N:${profileData.lastName};${profileData.firstName};;;`,
+                    `FN:${profileData.firstName} ${profileData.lastName}`,
+                    `ORG:${profileData.company}`,
+                    `TITLE:${profileData.title}`,
+                    `TEL;TYPE=CELL,VOICE:${profileData.phone}`,
+                    `EMAIL;TYPE=PREF,INTERNET:${profileData.email}`,
+                    `URL:${profileData.website}`,
+                    `NOTE:${profileData.bio}`,
+                    `ADR;TYPE=WORK:;;${profileData.location};;;;`,
+                    'END:VCARD'
+                ].join('\n');
+
+                const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `${profileData.firstName}_${profileData.lastName}.vcf`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                showToast("Contact card downloaded!", "fa-address-card");
+            } catch (err) {
+                showToast("Failed to generate contact file.", "fa-exclamation-circle");
+            }
+        }
+
+        // Generate QR Code using QRCode.js
+        function generateQR(textUrl) {
+            const container = document.getElementById('qrcode');
+            container.innerHTML = ""; // Clear existing
+
+            qrCodeObj = new QRCode(container, {
+                text: textUrl,
+                width: 160,
+                height: 160,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Toggle QR Configuration Accordion
+        function toggleQRConfig() {
+            const box = document.getElementById('qrConfigBox');
+            box.classList.toggle('hidden');
+        }
+
+        // Update QR Code with custom URL
+        function updateQRCode() {
+            const inputVal = document.getElementById('qrTargetInput').value.trim();
+            if (inputVal) {
+                generateQR(inputVal);
+                document.getElementById('qrUrlDisplay').textContent = inputVal;
+                showToast("QR Code updated!", "fa-qrcode");
+            } else {
+                showToast("Please enter a valid URL", "fa-exclamation-circle");
+            }
+        }
+
+        // Reset QR URL to Current Page
+        function resetQRUrl() {
+            const currentUrl = window.location.href;
+            document.getElementById('qrTargetInput').value = currentUrl;
+            document.getElementById('qrUrlDisplay').textContent = currentUrl;
+            generateQR(currentUrl);
+            showToast("QR reset to card page URL", "fa-undo");
+        }
+
+        // Download QR Code Image as PNG
+        function downloadQRCode() {
+            const img = document.querySelector('#qrcode img');
+            const canvas = document.querySelector('#qrcode canvas');
+            
+            let imageSrc = "";
+            if (img && img.src) {
+                imageSrc = img.src;
+            } else if (canvas) {
+                imageSrc = canvas.toDataURL("image/png");
+            }
+
+            if (imageSrc) {
+                const link = document.createElement('a');
+                link.href = imageSrc;
+                link.download = `${profileData.firstName}_BusinessCard_QR.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("QR Image saved to downloads!", "fa-file-arrow-down");
+            } else {
+                showToast("QR image not ready yet.", "fa-exclamation-circle");
+            }
+        }
+
+        // Share Digital Business Card Page
+        function sharePage() {
+            if (navigator.share) {
+                navigator.share({
+                    title: `${profileData.firstName} ${profileData.lastName} - Digital Business Card`,
+                    text: `Connect with ${profileData.firstName} ${profileData.lastName} (${profileData.title} at ${profileData.company})`,
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                // Fallback to Clipboard Copy
+                copyToClipboard(window.location.href);
+            }
+        }
+
+        // Copy Text to Clipboard safely
+        function copyToClipboard(text) {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast("Link copied to clipboard!", "fa-copy");
+        }
+
+        // Custom Toast Notification System
+        function showToast(message, iconClass = "fa-check-circle") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = message;
+            toastIcon.className = `fas ${iconClass} text-emerald-400`;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
